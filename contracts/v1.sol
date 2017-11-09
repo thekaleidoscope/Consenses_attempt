@@ -17,6 +17,23 @@ contract Decision{
 
   mapping (address=>loan_cons) requests;
 
+modifier _onlyRequester{
+  if(msg.sender==requests[msg.sender].reqr){
+    _;
+  }
+  else{
+    throw;
+  }
+}
+modifier _exceptReqr{
+  if(msg.sender!=requests[msg.sender].reqr){
+    _;
+  }
+  else{
+    throw;
+  }
+}
+
   loan_cons[] public loans;
 
   function make_req(uint amt){
@@ -33,7 +50,7 @@ contract Decision{
 
 
 
-  function des(address req,bool resp){
+  function des(address req,bool resp) _exceptReqr {
    if(!requests[req].resp[msg.sender])
    {requests[req].resp[msg.sender]=true;}
    else{
@@ -49,12 +66,17 @@ contract Decision{
 
   }
 
-  function decide(address _reqr) payable {
+  function decide(address _reqr) payable _onlyRequester returns(bool){
 
     uint t=requests[_reqr].yes + requests[_reqr].no;
 
-    if(requests[_reqr].yes> 60*t/100){
+    if(requests[_reqr].yes> 60*t/100 ){
      (requests[_reqr].reqr).send(requests[_reqr].amt);
+     return true;
+
+      }
+      else {
+        return false;
       }
 
   }
